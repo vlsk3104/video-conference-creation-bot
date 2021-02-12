@@ -4,6 +4,8 @@ require "json/add/core"
 
 Dotenv.load
 
+require 'jwt'
+
 def lambda_handler
   path = "https://api.zoom.us/v2/users/#{ENV['USER_ID']}/meetings"
   uri = URI.parse(path)
@@ -19,9 +21,15 @@ def lambda_handler
     agenda: "進捗報告"
   }.to_json
 
+  payload_for_jwt = {
+    iss: ENV['API_KEY'],
+    exp: Time.now.to_i + 36000
+  }
+  jwt = JWT.encode(payload_for_jwt,ENV['API_SECRET'],'HS256')
+
   headers = {
     "Content-Type" => "application/json",
-    "Authorization" => "Bearer #{ENV['JWT']}"
+    "Authorization" => "Bearer #{jwt}"
   }
 
   req = Net::HTTP::Post.new(uri.path)
